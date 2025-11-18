@@ -1,0 +1,512 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>甄嬛传：后宫生存·终极版</title>
+    <style>
+        /* --- 全局样式：古风配色 --- */
+        :root {
+            --bg-paper: #fcf3cf; /* 宣纸底色 */
+            --border-red: #8b1a1a; /* 宫墙红 */
+            --text-ink: #2b2b2b; /* 墨色 */
+            --gold: #b8860b; /* 皇室金 */
+            --btn-bg: #fffaf0;
+            --highlight: #d32f2f;
+        }
+
+        body {
+            background-color: #eedeb0;
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.3) 0px, rgba(255,255,255,0.3) 2px, transparent 2px, transparent 4px);
+            color: var(--text-ink);
+            font-family: "Songti SC", "Noto Serif SC", serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 主界面容器 */
+        #game-container {
+            width: 100%;
+            height: 100%;
+            max-width: 600px;
+            background: var(--bg-paper);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        /* 顶部：标题与位份 */
+        header {
+            background: var(--border-red);
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            border-bottom: 3px solid var(--gold);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        header h1 { margin: 0; font-size: 20px; letter-spacing: 2px; }
+        header .rank-badge { font-size: 14px; margin-top: 5px; opacity: 0.9; }
+
+        /* 属性面板 */
+        #status-panel {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            background: #fff8e1;
+            padding: 8px 5px;
+            border-bottom: 1px solid #d7ccc8;
+            font-size: 12px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .stat-box { display: flex; flex-direction: column; font-weight: bold; }
+        .stat-label { color: #795548; margin-bottom: 2px; }
+        .stat-val { font-size: 14px; color: var(--border-red); }
+
+        /* 剧情滚动区域 */
+        #log-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23d4af37' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .message {
+            margin-bottom: 18px;
+            line-height: 1.6;
+            animation: fadeIn 0.5s;
+        }
+        
+        .message.narrator { color: #333; }
+        .message.speech { color: #000080; font-weight: bold; margin-left: 10px; border-left: 3px solid #ccc; padding-left: 8px;}
+        .message.system { font-size: 13px; color: #666; font-style: italic; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 4px; }
+        .message.danger { color: #c62828; font-weight: bold; }
+
+        /* 操作区域 */
+        #action-area {
+            padding: 15px;
+            background: #fff;
+            border-top: 2px solid var(--gold);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            border: 1px solid #8b4513;
+            background: linear-gradient(to bottom, #fffaf0, #fdf5e6);
+            color: #4e342e;
+            padding: 12px 10px;
+            font-size: 16px;
+            font-family: inherit;
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.1s, background 0.2s;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        button:active { transform: scale(0.98); background: #ffe0b2; }
+        
+        /* 按钮上的小字提示 */
+        button .hint {
+            font-size: 12px;
+            color: #888;
+            font-weight: normal;
+        }
+
+        /* 特殊状态样式 */
+        .dead-end-btn { background: #333 !important; color: #fff !important; text-align: center; justify-content: center;}
+        .win-btn { background: #d4af37 !important; color: #fff !important; font-weight: bold; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 弹窗提示 */
+        #toast {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            display: none;
+            z-index: 100;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <header>
+        <h1 id="game-title">甄嬛传 · 生存录</h1>
+        <div class="rank-badge">当前位份：<span id="ui-rank">秀女</span></div>
+    </header>
+
+    <!-- 属性面板 -->
+    <div id="status-panel">
+        <div class="stat-box"><span class="stat-label">容貌</span><span class="stat-val" id="ui-beauty">0</span></div>
+        <div class="stat-box"><span class="stat-label">体质</span><span class="stat-val" id="ui-health">0</span></div>
+        <div class="stat-box"><span class="stat-label">心机</span><span class="stat-val" id="ui-wits">0</span></div>
+        <div class="stat-box"><span class="stat-label">圣宠</span><span class="stat-val" id="ui-favor">0</span></div>
+        <div class="stat-box"><span class="stat-label">银两</span><span class="stat-val" id="ui-money">0</span></div>
+    </div>
+
+    <!-- 剧情显示 -->
+    <div id="log-area">
+        <!-- 动态插入内容 -->
+    </div>
+
+    <!-- 按钮操作 -->
+    <div id="action-area">
+        <!-- 动态插入按钮 -->
+    </div>
+
+    <div id="toast"></div>
+</div>
+
+<script>
+    /* ================= 游戏内核逻辑 ================= */
+
+    // 游戏状态
+    let state = {
+        name: "甄嬛",
+        rank: "秀女",
+        beauty: 80, // 容貌
+        health: 80, // 体质
+        wits: 10,   // 心机
+        favor: 0,   // 圣宠
+        money: 50,  // 银两
+        items: [],  // 道具
+        flags: {},  // 剧情标记
+        sceneId: 'intro'
+    };
+
+    // 位份表
+    const RANKS = ["秀女", "官女子", "答应", "常在", "贵人", "嫔", "妃", "贵妃", "皇贵妃", "太后"];
+
+    // 剧情数据库
+    const SCENES = {
+        // --- 第一章：入宫前 ---
+        'intro': {
+            text: "公元1722年，雍正即位。为充实后宫，内务府举办选秀。<br>你是大理寺少卿甄远道之女。<br>选秀这日，你站在紫禁城外...",
+            choices: [
+                { text: "去庙里祈福，不想入宫", action: (s)=> { s.wits += 5; s.flags.reluctant=true; }, next: 'temple' },
+                { text: "精心打扮，志在必得", action: (s)=> { s.beauty += 10; s.wits -= 5; s.flags.ambitious=true; }, next: 'selection_gate' }
+            ]
+        },
+        'temple': {
+            text: "你在庙中遇到一温润如玉的太医，名唤温实初。<br>他递给你一只玉壶，问你是否愿意随他远走高飞。",
+            choices: [
+                { text: "收下玉壶，但不走 (获得道具)", action: (s)=> { s.items.push("玉壶"); s.favor += 5; }, next: 'selection_gate' },
+                { text: "义正言辞拒绝", action: (s)=> { s.wits += 5; }, next: 'selection_gate' }
+            ]
+        },
+        'selection_gate': {
+            text: "体元殿外，秀女云集。<br>夏冬春仗着家世，正在欺负看起来柔弱的安陵容。",
+            choices: [
+                { text: "挺身而出，解围", hint:"心机+5 结识安陵容", action: (s)=> { s.wits += 5; s.flags.friend_an=true; }, next: 'selection_moment' },
+                { text: "明哲保身，旁观", hint:"无事发生", action: (s)=> { s.wits += 2; }, next: 'selection_moment' }
+            ]
+        },
+        'selection_moment': {
+            text: "大殿之上，皇上看了你一眼。<br>太后：“还要再看吗？撂牌子吧。”<br>这时一只蝴蝶飞落在你的鬓边海棠花上。",
+            choices: [
+                { text: "保持镇定，行礼如仪", action: (s)=> { s.favor += 10; }, next: 'selected' },
+                { text: "惊慌失措，挥手赶蝶", action: (s)=> { s.beauty -= 10; }, next: 'fail_home' }
+            ]
+        },
+        'fail_home': {
+            text: "皇上皱眉：“殿前失仪，成何体统。”<br><br>【结局】你被撂牌子回家，嫁给了一个普通富商，平淡过完一生。",
+            type: 'end'
+        },
+        'selected': {
+            text: "皇上笑道：“莞莞类卿。留牌子。”<br>你入宫了，初封为【常在】。<br>教引姑姑芳若来了，暗示你该给点好处。",
+            action: (s)=> { s.rank = "常在"; },
+            choices: [
+                { text: "给五十两银子", hint:"银两-50", condition: (s)=>s.money>=50, action: (s)=>{s.money-=50; s.wits+=10; s.flags.fangruo=true;}, next: 'palace_life' },
+                { text: "装傻，只给几两碎银", hint:"银两-5", action: (s)=>{s.money-=5; s.wits-=5;}, next: 'palace_life' }
+            ]
+        },
+
+        // --- 第二章：后宫生存循环 ---
+        'palace_life': {
+            text: "入驻碎玉轩。这里冷僻，挖出了麝香。<br>现在的局势：华妃盛宠，皇后深沉。<br>你打算如何度日？",
+            type: 'hub', // 枢纽节点
+            choices: [
+                { text: "称病避宠，韬光养晦", action: (s)=>{s.health+=10; s.favor-=5;}, next: 'event_garden' },
+                { text: "主动出击，御花园以此争宠", condition: (s)=>s.health>50, action: (s)=>{s.wits+=5;}, next: 'event_meet_emperor' },
+                { text: "拜访皇后，寻求庇护", action: (s)=>{s.wits-=5; s.flags.team_queen=true;}, next: 'trap_queen' }
+            ]
+        },
+
+        // --- 随机/分支事件 ---
+        'event_garden': {
+            text: "你在御花园荡秋千，四周无人。",
+            choices: [
+                { text: "吹箫一曲", action: (s)=>{s.beauty+=5;}, next: 'meet_fake_prince' },
+                { text: "静静坐着", next: 'maid_event' }
+            ]
+        },
+        'meet_fake_prince': {
+            text: "一男子走近，自称果郡王，与你谈论乐理。<br>其实你知道他是皇上。",
+            choices: [
+                { text: "揭穿他：皇上万福", action: (s)=>{s.favor+=5;}, next: 'first_night' },
+                { text: "装傻：王爷有礼了", hint:"圣宠大幅增加", action: (s)=>{s.favor+=30; s.wits+=10;}, next: 'first_night_romantic' }
+            ]
+        },
+        'first_night': {
+            text: "皇上今晚翻了你的牌子。<br>被裹在被子里抬进养心殿。",
+            choices: [
+                { text: "娇羞害怕", action: (s)=>{s.favor+=10;}, next: 'promoted_guiren' },
+                { text: "像木头一样", action: (s)=>{s.favor-=10;}, next: 'cold_palace_start' }
+            ]
+        },
+        'first_night_romantic': {
+            text: "汤泉宫沐浴，椒房之宠。<br>皇上对你爱不释手：“朕的莞莞。”",
+            action: (s)=>{s.rank="贵人"; s.favor+=50;},
+            next: 'promoted_pin'
+        },
+        
+        // --- 危机事件 ---
+        'trap_queen': {
+            text: "皇后送来一碗【安胎药】(其实你没怀孕)，说是补身子的。<br>你的心机告诉你，这药味道不对。",
+            choices: [
+                { text: "谢恩喝下", action: (s)=>{s.health=0;}, next: 'dead_poison' },
+                { text: "假装喝下，偷偷倒掉", hint:"需要心机>20", condition:(s)=>s.wits>=20, action:(s)=>{s.wits+=10;}, next: 'counter_attack' },
+                { text: "让猫打翻药碗", action:(s)=>{s.favor-=5;}, next: 'palace_life' }
+            ]
+        },
+        'dead_poison': {
+            text: "你喝下了药，当晚腹痛如绞。<br>这是绝育汤，也是夺命散。<br><br>【结局】香消玉殒，死因不明。",
+            type: 'end'
+        },
+
+        // --- 中期剧情 ---
+        'promoted_guiren': {
+            text: "虽然得宠，但华妃视你为眼中钉。<br>华妃让你在烈日下罚跪读《女则》。",
+            action: (s)=>{s.rank="贵人";},
+            choices: [
+                { text: "硬抗，跪满两个时辰", action: (s)=>{s.health-=50; s.favor+=20; s.flags.miscarriage=true;}, next: 'sick_bed' },
+                { text: "装晕", hint:"需要心机>15", condition:(s)=>s.wits>=15, action:(s)=>{s.wits+=5; s.favor+=10;}, next: 'emperor_save' }
+            ]
+        },
+        'sick_bed': {
+            text: "你流产了（如果有的话），或者大病一场。<br>皇上大怒，褫夺华妃封号。<br>你因祸得福，但也伤了身子。",
+            choices: [{text:"养好身体再说", next:'promoted_pin'}]
+        },
+        'emperor_save': {
+            text: "皇上赶到，见你晕倒，大发雷霆责骂华妃。<br>抱着你回宫。",
+            choices: [{text:"依偎在皇上怀里哭诉", next:'promoted_pin'}]
+        },
+
+        // --- 后期剧情 ---
+        'promoted_pin': {
+            text: "时光飞逝，你已晋升为【嫔】。<br>父亲在前朝被弹劾，你在后宫如履薄冰。<br>这时，你发现自己怀孕了。",
+            action: (s)=>{s.rank="莞嫔"; s.flags.pregnant=true;},
+            choices: [
+                { text: "告诉皇上", action:(s)=>{s.favor+=20;}, next:'shirt_incident' },
+                { text: "找温太医保胎", action:(s)=>{s.health+=20;}, next:'shirt_incident' }
+            ]
+        },
+        'shirt_incident': {
+            text: "【关键剧情】册封礼上，内务府送来的吉服破损，姜公公让你穿纯元皇后的故衣替代。<br>这是皇后的陷阱！",
+            choices: [
+                { text: "穿上，来不及了", next: 'banished' },
+                { text: "觉得不妥，称病不去", hint:"需心机>40", condition:(s)=>s.wits>=40, next: 'safe_pass' }
+            ]
+        },
+        'banished': {
+            text: "皇上大怒：“莞莞类卿，你只是个替身！竟敢穿她的衣服！”<br>你心灰意冷，生下公主后，请求出宫修行。",
+            choices: [
+                { text: "前往甘露寺修行", action:(s)=>{s.rank="废妃"; s.money=0;}, next:'temple_return' },
+                { text: "跪求原谅，愿老死宫中", next:'cold_palace_end' }
+            ]
+        },
+        'cold_palace_end': {
+            text: "皇上厌恶你的纠缠。<br>你在冷宫中日复一日，直到被太监勒死。<br><br>【结局】冷宫怨魂。",
+            type: 'end'
+        },
+
+        // --- 回宫复仇篇 ---
+        'temple_return': {
+            text: "三年后。你在甘露寺受尽欺凌，但与果郡王相爱。<br>此时传来果郡王死讯（误传），你发现自己怀了他的孩子。<br>为了复仇和保住孩子，你必须回宫。",
+            choices: [
+                { text: "设计与皇上重逢", hint:"心机全开", action:(s)=>{s.beauty+=50; s.wits+=50; s.rank="熹妃";}, next:'final_battle' }
+            ]
+        },
+        
+        // --- 最终决战 ---
+        'final_battle': {
+            text: "你回宫了，赐大姓钮祜禄，封为【熹妃】。<br>祺贵人告发你私通，要求滴血验亲！<br>水里被做了手脚（明矾）。",
+            choices: [
+                { text: "慌张，不仅如何是好", next: 'dead_family' },
+                { text: "冷静，指甲里藏有明矾吗？", hint:"智斗皇后", action:(s)=>{s.wits+=20;}, next: 'blood_test_win' }
+            ]
+        },
+        'dead_family': {
+            text: "你乱了阵脚，皇上疑心大起。<br>满门抄斩。<br><br>【结局】满盘皆输。",
+            type: 'end'
+        },
+        'blood_test_win': {
+            text: "你抓住了水的破绽，狠狠打击了皇后党。<br>皇上对你愧疚万分，封你为【熹贵妃】。<br>数年后，皇上病重。",
+            action: (s)=>{s.rank="熹贵妃";},
+            choices: [
+                { text: "喂皇上吃金丹", hint:"送他一程", next:'victory' },
+                { text: "尽心侍奉", next:'victory_delayed' }
+            ]
+        },
+
+        // --- 胜利结局 ---
+        'victory': {
+            text: "皇上驾崩。<br>四阿哥登基。<br>你被尊为圣母皇太后。<br><br>看着窗外的飞鸟，你想起了那年的杏花微雨。<br><br>【完美结局】母仪天下，万寿无疆。",
+            type: 'end-win'
+        },
+        'victory_delayed': {
+            text: "你尽心侍奉，皇上多活了几年，但最终还是把皇位传给了你的养子。<br>你成为了太后，虽然辛苦，但也是最后的赢家。<br><br>【结局】平安太后。",
+            type: 'end-win'
+        }
+    };
+
+    /* ================= 引擎逻辑 ================= */
+
+    const logArea = document.getElementById('log-area');
+    const actionArea = document.getElementById('action-area');
+
+    // 初始化
+    function initGame() {
+        state.sceneId = 'intro';
+        renderScene();
+        updateUI();
+    }
+
+    // 更新UI数值
+    function updateUI() {
+        document.getElementById('ui-rank').innerText = state.rank;
+        document.getElementById('ui-beauty').innerText = state.beauty;
+        document.getElementById('ui-health').innerText = state.health;
+        document.getElementById('ui-wits').innerText = state.wits;
+        document.getElementById('ui-favor').innerText = state.favor;
+        document.getElementById('ui-money').innerText = state.money;
+
+        // 颜色动态变化
+        document.getElementById('ui-health').style.color = state.health < 30 ? 'red' : 'var(--border-red)';
+    }
+
+    // 输出日志
+    function log(html, type='narrator') {
+        const div = document.createElement('div');
+        div.className = `message ${type}`;
+        div.innerHTML = html;
+        logArea.appendChild(div);
+        // 自动滚动到底部
+        setTimeout(() => logArea.scrollTop = logArea.scrollHeight, 100);
+    }
+
+    // 渲染场景
+    function renderScene() {
+        const scene = SCENES[state.sceneId];
+        if (!scene) return alert("剧情开发中...");
+
+        // 显示剧情文本
+        log(scene.text);
+
+        // 清空按钮
+        actionArea.innerHTML = '';
+
+        // 如果是结局
+        if (scene.type === 'end' || scene.type === 'end-win') {
+            const btn = document.createElement('button');
+            btn.innerText = "尘埃落定 - 重新来过";
+            btn.className = scene.type === 'end-win' ? 'win-btn' : 'dead-end-btn';
+            btn.onclick = () => window.location.reload();
+            actionArea.appendChild(btn);
+            return;
+        }
+
+        // 生成选项
+        if (scene.choices) {
+            scene.choices.forEach(choice => {
+                // 检查条件
+                if (choice.condition && !choice.condition(state)) {
+                    return; // 不满足条件不显示，或者显示灰色（这里选择不显示以简化）
+                }
+
+                const btn = document.createElement('button');
+                let btnContent = `<span>${choice.text}</span>`;
+                if (choice.hint) {
+                    btnContent += `<span class="hint">${choice.hint}</span>`;
+                }
+                btn.innerHTML = btnContent;
+
+                btn.onclick = () => {
+                    // 执行动作
+                    log(`> ${choice.text}`, 'system'); // 记录玩家选择
+                    
+                    if (choice.action) {
+                        choice.action(state);
+                        showToast("属性已变更");
+                    }
+                    
+                    // 检查死亡条件
+                    if (checkDeath()) return;
+
+                    // 跳转
+                    state.sceneId = choice.next;
+                    updateUI();
+                    
+                    // 延迟一点渲染下一段，更有节奏感
+                    setTimeout(renderScene, 300);
+                };
+                actionArea.appendChild(btn);
+            });
+        }
+    }
+
+    // 检查是否死亡
+    function checkDeath() {
+        if (state.health <= 0) {
+            log("你积劳成疾，太医束手无策...<br>【结局】病死宫中", "danger");
+            actionArea.innerHTML = '<button class="dead-end-btn" onclick="location.reload()">重新开始</button>';
+            return true;
+        }
+        if (state.wits < -10) {
+            log("你在宫中蠢笨如猪，被当作替罪羊处死。<br>【结局】杖毙", "danger");
+            actionArea.innerHTML = '<button class="dead-end-btn" onclick="location.reload()">重新开始</button>';
+            return true;
+        }
+        return false;
+    }
+
+    // 简单的提示框
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.display = 'block';
+        t.style.animation = 'fadeIn 0.3s';
+        setTimeout(() => { t.style.display = 'none'; }, 1500);
+    }
+
+    // 启动
+    initGame();
+
+</script>
+</body>
+</html>
+```
